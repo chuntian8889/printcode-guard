@@ -93,5 +93,55 @@ class Camera:
             if w <= 0 or h <= 0:
                 return []
             frame = frame[y : y + h, x : x + w]
-        decoded = decode(frame)
-        return [d.data.decode("utf-8", errors="ignore") for d in decoded]
+
+        results = set()
+
+        # 1. 原始图像
+        results.update(self._decode_with_pyzbar(frame))
+        results.update(self._decode_with_cv2(frame))
+
+        # 2. 放大 2 倍（小二维码常用有效）
+        big = cv2.resize(frame, None, fx=2, fy=2, interpolation=cv2.INTER_CUBIC)
+        results.update(self._decode_with_pyzbar(big))
+        results.update(self._decode_with_cv2(big))
+
+        # 3. 灰度 + 自适应二值化
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        results.update(self._decode_with_pyzbar(gray))
+        results.update(self._decode_with_cv2(gray))
+
+        binary = cv2.adaptiveThreshold(
+            gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+            cv2.THRESH_BINARY, 21, 5
+        )
+        results.update(self._decode_with_pyzbar(binary))
+        results.update(self._decode_with_cv2(binary))
+
+        # 4. 锐化
+        kernel = cv2.getGaussianKernel(3, 0)
+        blurred = cv2.filter2D(gray, -1, kernel)
+        sharpened = cv2.addWeighted(gray, 1.5, blurred, -0.5, 0)
+        results.update(self._decode_with_pyzbar(sharpened))
+        results.update(self._decode_with_cv2(sharpened))
+
+        return list(results)
+
+    @staticmethod
+    def _decode_with_pyzbar(image) -> List[str]:
+        try:
+            decoded = decode(image)
+            return [d.data.decode("utf-8", errors="ignore") for d in decoded]
+        except Exception:
+            return []
+
+    @staticmethod
+    def _decode_with_cv2(image) -> List[str]:
+        try:
+            detector = cv2.QRCodeDetector()
+            if len(image.shape) == 2:
+                data, _, _ = detector.detectAndDecode(image)
+            else:
+                data, _, _ = detector.detectAndDecode(image)
+            return [data] if data else []
+        except Exception:
+            return []
