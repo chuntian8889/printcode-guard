@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PrintCode Guard v1</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div id="app">
+    <header>
+      <h1>PrintCode Guard <span class="tag">v1 RTSP 验证版</span></h1>
+    </header>
+
+    <div class="controls">
+      <div>
+        <label>RTSP 地址</label>
+        <input id="rtsp-url" type="text" placeholder="rtsp://..." style="width: 320px;">
+        <button id="btn-open">打开摄像头</button>
+      </div>
+      <div>
+        <button id="btn-new-order">新建订单</button>
+        <button id="btn-import">导入码库</button>
+        <input id="file-import" type="file" accept=".csv,.xlsx" hidden>
+      </div>
+      <div>
+        <button id="btn-start">开始检测</button>
+        <button id="btn-stop">暂停检测</button>
+        <button id="btn-clear-alarm">清除报警</button>
+      </div>
+    </div>
+
+    <div class="status-bar" id="status-bar">
+      <span>订单: <b id="order-name">-</b></span>
+      <span>状态: <b id="run-state">停止</b></span>
+      <span>已读: <b id="total-count">0</b></span>
+      <span>重复: <b id="dup-count">0</b></span>
+      <span>异常: <b id="err-count">0</b></span>
+      <span>当前码: <b id="latest-code">-</b></span>
+    </div>
+
+    <div class="main">
+      <div class="video-panel">
+        <div class="video-wrap">
+          <img id="video" src="" alt="实时画面" />
+        </div>
+        <p class="hint">若自动识别不到，可在画面区域用鼠标框选二维码位置（ROI）。</p>
+      </div>
+      <div class="side-panel">
+        <h3>最近扫码记录</h3>
+        <ul id="scan-list"></ul>
+        <h3>最近报警记录</h3>
+        <ul id="alarm-list"></ul>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
