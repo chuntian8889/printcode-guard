@@ -19,7 +19,7 @@
    ```
 3. 启动服务：
    ```bash
-   .venv/bin/uvicorn src.printcode_guard.main:app --reload --host 0.0.0.0 --port 8000
+   .venv/bin/uvicorn src.printcode_guard.main:app --reload --host 0.0.0.0 --port 8090
    ```
 4. 打开 http://localhost:8000/ 开始验证。
 
