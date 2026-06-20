@@ -1,3 +1,4 @@
+import os
 import threading
 import time
 from typing import List, Optional, Tuple
@@ -14,9 +15,20 @@ class Camera:
         self.thread: Optional[threading.Thread] = None
         self.lock = threading.Lock()
         self.roi: Optional[Tuple[int, int, int, int]] = None
+        self._static_image: Optional = None
 
     def start(self):
         if self.running:
+            return
+        # 支持本地图片路径作为测试/验证用途
+        if os.path.isfile(self.rtsp_url):
+            img = cv2.imread(self.rtsp_url)
+            if img is None:
+                raise RuntimeError(f"无法读取图片: {self.rtsp_url}")
+            self._static_image = img
+            self.running = True
+            self.thread = threading.Thread(target=self._static_loop, daemon=True)
+            self.thread.start()
             return
         self.cap = cv2.VideoCapture(self.rtsp_url)
         if not self.cap.isOpened():
@@ -41,6 +53,12 @@ class Camera:
                     self.frame = frame
             else:
                 time.sleep(0.01)
+
+    def _static_loop(self):
+        while self.running:
+            with self.lock:
+                self.frame = self._static_image.copy()
+            time.sleep(0.05)
 
     def get_frame(self):
         with self.lock:

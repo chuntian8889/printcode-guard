@@ -4,9 +4,10 @@
 
 ## 快速启动
 
-1. 安装依赖：
+1. 创建虚拟环境并安装依赖：
    ```bash
-   pip install -r requirements.txt
+   python3.11 -m venv .venv
+   .venv/bin/pip install -r requirements.txt
    ```
 2. 确保本地 PostgreSQL 已启动，并创建数据库：
    ```bash
@@ -18,7 +19,7 @@
    ```
 3. 启动服务：
    ```bash
-   cd src/printcode_guard && uvicorn main:app --reload --host 0.0.0.0 --port 8000
+   .venv/bin/uvicorn src.printcode_guard.main:app --reload --host 0.0.0.0 --port 8000
    ```
 4. 打开 http://localhost:8000/ 开始验证。
 

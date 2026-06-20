@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from models import Base
-from orders import create_order, import_codes_for_order, get_code_library
+from printcode_guard.models import Base
+from printcode_guard.orders import create_order, import_codes_for_order, get_code_library
 
 engine = create_engine("sqlite:///:memory:")
 SessionLocal = sessionmaker(bind=engine)

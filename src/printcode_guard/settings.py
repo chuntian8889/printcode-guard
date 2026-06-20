@@ -1,7 +1,7 @@
 import json
 from typing import Optional
 from sqlalchemy.orm import Session
-from models import Setting
+from .models import Setting
 
 
 def get_setting(db: Session, key: str, default=None):

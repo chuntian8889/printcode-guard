@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from detection import classify_code
+from printcode_guard.detection import classify_code
 
 
 def test_classify_first_valid_code():

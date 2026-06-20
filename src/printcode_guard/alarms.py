@@ -3,8 +3,8 @@ from pathlib import Path
 from typing import Optional
 from sqlalchemy.orm import Session
 import cv2
-from camera import Camera
-from models import AlarmRecord
+from .camera import Camera
+from .models import AlarmRecord
 
 
 SCREENSHOT_DIR = Path(__file__).resolve().parents[2] / "private-data" / "screenshots"

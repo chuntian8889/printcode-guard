@@ -45,7 +45,7 @@ def classify_code(content: str, state: Dict, now: datetime.datetime) -> Dict:
 
 
 def refresh_order_state(db, order_id: int) -> Dict:
-    from orders import get_code_library
+    from .orders import get_code_library
 
     codes = get_code_library(db, order_id)
     return {

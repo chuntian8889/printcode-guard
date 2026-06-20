@@ -1,6 +1,6 @@
 from typing import List
 from sqlalchemy.orm import Session
-from models import Order, Code
+from .models import Order, Code
 
 
 def create_order(db: Session, name: str) -> Order:
