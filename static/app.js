@@ -1,5 +1,3 @@
-let isSelecting = false;
-let startX, startY, selectionBox;
 let currentOrderId = null;
 
 function el(id) { return document.getElementById(id); }
@@ -13,15 +11,18 @@ async function fetchJson(url, opts = {}) {
   return res.json();
 }
 
-el("btn-open").onclick = async () => {
-  const url = el("rtsp-url").value.trim();
-  if (!url) return alert("请输入 RTSP 地址");
-  await fetchJson("/api/camera/open", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ url }),
-  });
-  el("video").src = "/api/camera/frame?" + Date.now();
+el("btn-save-scanner").onclick = async () => {
+  const device = el("scanner-device").value.trim();
+  try {
+    await fetchJson("/api/scanner/device", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ device: device || null }),
+    });
+    alert("扫描头配置已保存，请重启服务生效");
+  } catch (e) {
+    alert("保存失败: " + e.message);
+  }
 };
 
 el("btn-new-order").onclick = async () => {
@@ -57,6 +58,14 @@ el("btn-stop").onclick = () =>
   fetchJson("/api/detection/stop", { method: "POST" }).then(updateStatus);
 el("btn-clear-alarm").onclick = () =>
   fetchJson("/api/alarm/clear", { method: "POST" }).then(updateStatus);
+el("btn-test-buzzer").onclick = async () => {
+  try {
+    const data = await fetchJson("/api/buzzer/test", { method: "POST" });
+    alert(`蜂鸣器测试已触发，后端：${data.backend}`);
+  } catch (e) {
+    alert("蜂鸣器测试失败: " + e.message);
+  }
+};
 
 async function updateStatus() {
   let s;
@@ -72,8 +81,14 @@ async function updateStatus() {
   el("dup-count").textContent = s.duplicate_count;
   el("err-count").textContent = s.abnormal_count;
   el("latest-code").textContent = s.latest_code || "-";
+  el("scanner-device-display").textContent = s.scanner_device || "-";
+  el("scanner-online").textContent = s.scanner_online ? "在线" : "离线";
+  el("scanner-device-status").textContent = s.scanner_device || "-";
+  el("scanner-online-status").textContent = s.scanner_online ? "在线" : "离线";
+  el("scanner-error-status").textContent = s.scanner_error || "无";
+  el("buzzer-backend").textContent = s.buzzer_backend || "-";
   if (s.current_order) currentOrderId = s.current_order.id;
-  if (s.rtsp_url) el("rtsp-url").value = s.rtsp_url;
+  if (s.scanner_device) el("scanner-device").value = s.scanner_device;
   if (s.alarm_active) {
     document.body.classList.add("alarming");
     playBeep();
@@ -126,71 +141,9 @@ function playBeep() {
   }
 }
 
-// ROI 框选
-const videoWrap = document.querySelector(".video-wrap");
-videoWrap.onmousedown = (e) => {
-  const rect = videoWrap.getBoundingClientRect();
-  startX = e.clientX - rect.left;
-  startY = e.clientY - rect.top;
-  isSelecting = true;
-  if (!selectionBox) {
-    selectionBox = document.createElement("div");
-    selectionBox.className = "selection-box";
-    videoWrap.appendChild(selectionBox);
-  }
-  selectionBox.style.left = startX + "px";
-  selectionBox.style.top = startY + "px";
-  selectionBox.style.width = "0px";
-  selectionBox.style.height = "0px";
-  selectionBox.style.display = "block";
-};
-
-document.onmousemove = (e) => {
-  if (!isSelecting || !selectionBox) return;
-  const rect = videoWrap.getBoundingClientRect();
-  const x = e.clientX - rect.left;
-  const y = e.clientY - rect.top;
-  const w = Math.abs(x - startX);
-  const h = Math.abs(y - startY);
-  const left = Math.min(x, startX);
-  const top = Math.min(y, startY);
-  selectionBox.style.left = left + "px";
-  selectionBox.style.top = top + "px";
-  selectionBox.style.width = w + "px";
-  selectionBox.style.height = h + "px";
-};
-
-document.onmouseup = async () => {
-  if (!isSelecting || !selectionBox) return;
-  isSelecting = false;
-  const img = el("video");
-  const wrapRect = videoWrap.getBoundingClientRect();
-  const box = selectionBox.getBoundingClientRect();
-  const displayW = wrapRect.width;
-  const displayH = wrapRect.height;
-  const naturalW = img.naturalWidth || displayW;
-  const naturalH = img.naturalHeight || displayH;
-  const scaleX = naturalW / displayW;
-  const scaleY = naturalH / displayH;
-  const x = Math.round((box.left - wrapRect.left) * scaleX);
-  const y = Math.round((box.top - wrapRect.top) * scaleY);
-  const w = Math.round(box.width * scaleX);
-  const h = Math.round(box.height * scaleY);
-  selectionBox.style.display = "none";
-  try {
-    await fetchJson("/api/camera/roi", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ x, y, w, h }),
-    });
-    alert("ROI 已设置");
-  } catch (e) {
-    alert("设置 ROI 失败: " + e.message);
-  }
-};
-
 setInterval(() => {
   updateStatus();
   updateLists();
 }, 1000);
 updateStatus();
+updateLists();
