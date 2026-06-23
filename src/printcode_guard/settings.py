@@ -50,3 +50,12 @@ def get_dedup_seconds(db: Session) -> int:
 
 def set_dedup_seconds(db: Session, seconds: int):
     set_setting(db, "dedup_seconds", str(seconds))
+
+
+def get_scanner_device(db) -> Optional[str]:
+    value = get_setting(db, "scanner_device", "")
+    return value if value else None
+
+
+def set_scanner_device(db, device: Optional[str]):
+    set_setting(db, "scanner_device", device or "")
