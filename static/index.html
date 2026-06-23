@@ -9,14 +9,14 @@
 <body>
   <div id="app">
     <header>
-      <h1>PrintCode Guard <span class="tag">v1 RTSP 验证版</span></h1>
+      <h1>PrintCode Guard <span class="tag">v1 USB 扫描头版</span></h1>
     </header>
 
     <div class="controls">
       <div>
-        <label>RTSP 地址</label>
-        <input id="rtsp-url" type="text" placeholder="rtsp://..." style="width: 320px;">
-        <button id="btn-open">打开摄像头</button>
+        <label>扫描头设备路径（留空自动发现）</label>
+        <input id="scanner-device" type="text" placeholder="/dev/input/event12" style="width: 260px;">
+        <button id="btn-save-scanner">保存</button>
       </div>
       <div>
         <button id="btn-new-order">新建订单</button>
@@ -27,6 +27,7 @@
         <button id="btn-start">开始检测</button>
         <button id="btn-stop">暂停检测</button>
         <button id="btn-clear-alarm">清除报警</button>
+        <button id="btn-test-buzzer">测试蜂鸣器</button>
       </div>
     </div>
 
@@ -37,14 +38,20 @@
       <span>重复: <b id="dup-count">0</b></span>
       <span>异常: <b id="err-count">0</b></span>
       <span>当前码: <b id="latest-code">-</b></span>
+      <span>扫描头: <b id="scanner-device-display">-</b></span>
+      <span>在线: <b id="scanner-online">-</b></span>
+      <span>蜂鸣器: <b id="buzzer-backend">-</b></span>
     </div>
 
     <div class="main">
       <div class="video-panel">
-        <div class="video-wrap">
-          <img id="video" src="" alt="实时画面" />
+        <div class="scanner-status">
+          <h3>扫描头状态</h3>
+          <p>设备: <span id="scanner-device-status">-</span></p>
+          <p>在线: <span id="scanner-online-status">-</span></p>
+          <p>错误: <span id="scanner-error-status">-</span></p>
+          <p class="hint">USB 扫描头已连接。开始检测后，扫描到的二维码会显示在右侧记录中。</p>
         </div>
-        <p class="hint">若自动识别不到，可在画面区域用鼠标框选二维码位置（ROI）。</p>
       </div>
       <div class="side-panel">
         <h3>最近扫码记录</h3>
