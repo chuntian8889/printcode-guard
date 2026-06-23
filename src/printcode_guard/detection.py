@@ -1,47 +1,70 @@
 import datetime
-from typing import Dict
+from typing import Dict, Optional
+
+from sqlalchemy.orm import Session
+
+from .models import ScanRecord
 
 
-DUPLICATE_WINDOW_SECONDS = 2
+def _is_content_seen_before(db: Optional[Session], content: str) -> bool:
+    """查询数据库：该二维码是否在任何订单、任何时间被扫描过。"""
+    if db is None:
+        return False
+    return (
+        db.query(ScanRecord).filter(ScanRecord.content == content).first() is not None
+    )
 
 
-def classify_code(content: str, state: Dict, now: datetime.datetime) -> Dict:
-    last_seen = state.get("last_seen", {})
+def classify_code(
+    content: str,
+    state: Dict,
+    now: datetime.datetime,
+    db: Optional[Session] = None,
+) -> Dict:
     order_codes = state.get("order_codes", set())
 
-    result = {
+    base = {
         "content": content,
-        "status": "ok",
         "is_duplicate": False,
         "is_abnormal": False,
         "alarm_type": None,
+        "should_record": True,
     }
 
     # 格式校验：空串或极短
     if not content or len(content) < 3:
-        result["status"] = "format_error"
-        result["is_abnormal"] = True
-        result["alarm_type"] = "format_error"
-        return result
+        return {
+            **base,
+            "status": "format_error",
+            "is_abnormal": True,
+            "alarm_type": "format_error",
+        }
 
-    # 短时间重复过滤
-    last_time = last_seen.get(content)
-    if last_time and (now - last_time).total_seconds() < DUPLICATE_WINDOW_SECONDS:
-        result["status"] = "duplicate"
-        result["is_duplicate"] = True
-        result["is_abnormal"] = True
-        result["alarm_type"] = "duplicate"
-        return result
+    # 全局历史去重：数据库中已存在该码 -> 重码报警
+    if _is_content_seen_before(db, content):
+        return {
+            **base,
+            "status": "duplicate",
+            "is_duplicate": True,
+            "is_abnormal": True,
+            "alarm_type": "duplicate",
+        }
 
-    if content not in order_codes:
-        result["status"] = "not_in_library"
-        result["is_abnormal"] = True
-        result["alarm_type"] = "not_in_library"
-    else:
-        state.setdefault("scanned", set()).add(content)
+    # 码库比对（如果码库为空则跳过，方便第一阶段不接上游数据时直接测试）
+    if order_codes and content not in order_codes:
+        return {
+            **base,
+            "status": "not_in_library",
+            "is_abnormal": True,
+            "alarm_type": "not_in_library",
+        }
 
-    last_seen[content] = now
-    return result
+    # 正常通过
+    state.setdefault("scanned", set()).add(content)
+    return {
+        **base,
+        "status": "ok",
+    }
 
 
 def refresh_order_state(db, order_id: int) -> Dict:
